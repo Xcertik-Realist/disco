@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>
+    
+</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            margin: 0;
+            background-color: white;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        html {
+            height: 100%;
+            background-color: white;
+        }
+
+        #screen {
+            flex: 1;
+            overflow: hidden;
+            background-color: white;
+        }
+
+    </style>
+
+    <script type="module" crossorigin="anonymous">
+        import RFB from './core/rfb.js';
+        let rfb;
+        let desktopName;
+
+        function credentialsAreRequired(e) {
+            const password = 'false';
+            rfb.sendCredentials({ password: password });
+        }
+
+        function updateDesktopName(e) {
+            desktopName = e.detail.name;
+        }
+
+        function readQueryVariable(name, defaultValue) {
+            const re = new RegExp('.*[?&]' + name + '=([^&#]*)'),
+                  match = ''.concat(document.location.href, window.location.hash).match(re);
+
+            if (match) {
+                return decodeURIComponent(match[1]);
+            }
+
+            return defaultValue;
+        }
+
+        const host = readQueryVariable('host', window.location.hostname);
+        let port = readQueryVariable('port', window.location.port);
+        const password = readQueryVariable('password');
+        const path = readQueryVariable('path', 'websockify');
+
+        let url;
+        if (window.location.protocol === "https:") {
+            url = 'wss';
+        } else {
+            url = 'ws';
+        }
+        url += '://' + host;
+        if(port) {
+            url += ':' + port;
+        }
+        url += '/' + path;
+
+        rfb = new RFB(document.getElementById('screen'), url,
+                      { credentials: { password: password } });
+        rfb.addEventListener("credentialsrequired", credentialsAreRequired);
+        rfb.addEventListener("desktopname", updateDesktopName);
+        rfb.viewOnly = readQueryVariable('view_only', false);
+        rfb.scaleViewport = readQueryVariable('scale', false);
+
+    </script>
+</head>
+
+<body><div id="screen" style="background-color: white; color: white"></div>
+</body></html>
